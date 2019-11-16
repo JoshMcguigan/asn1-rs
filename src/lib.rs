@@ -300,7 +300,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
 mod tests {
     use super::from_oer_bytes;
 
-    serde_asn1_codegen::from_dir!("src/asn/");
+    serde_asn1_codegen::from!("src/asn");
 
     #[test]
     fn it_works() {
