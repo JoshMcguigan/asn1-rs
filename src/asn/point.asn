@@ -1,0 +1,8 @@
+PointModule DEFINITIONS ::= BEGIN
+
+Point ::= SEQUENCE {
+	x	INTEGER,
+	y	INTEGER
+}
+
+END
