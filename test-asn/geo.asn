@@ -1,0 +1,13 @@
+Geometry DEFINITIONS ::= BEGIN
+
+Point ::= SEQUENCE {
+	x	INTEGER,
+	y	INTEGER
+}
+
+Line ::= SEQUENCE {
+	p1	Point,
+	p2	Point
+}
+
+END

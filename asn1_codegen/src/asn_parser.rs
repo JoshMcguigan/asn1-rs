@@ -12,7 +12,7 @@ pub struct AsnSequence<'a> {
 
 pub struct AsnField<'a> {
     pub name: &'a str,
-    field_type: AsnType<'a>,
+    pub field_type: AsnType<'a>,
 }
 
 impl<'a> AsnSequence<'a> {
@@ -40,7 +40,7 @@ impl<'a> AsnSequence<'a> {
 
             fields.push(AsnField {
                 name: field_name,
-                field_type: AsnType { name: field_type },
+                field_type: field_type.into(),
             });
 
             offset += 2;
@@ -52,10 +52,22 @@ impl<'a> AsnSequence<'a> {
     }
 }
 
-// TODO maybe this needs to be an enum of default/custom type
-// also need to handle resolving types from other places
-pub struct AsnType<'a> {
-    name: &'a str,
+#[derive(Debug, PartialEq)]
+pub enum AsnType<'a> {
+    /// ASN1 default integer type with no bounds specified
+    Integer,
+    /// Custom type defined by the user
+    Custom(&'a str),
+}
+
+
+impl<'a> From<&'a str> for AsnType<'a> {
+    fn from(s: &'a str) -> Self {
+        match s {
+            "INTEGER" => Self::Integer,
+            other => Self::Custom(other),
+        }
+    }
 }
 
 impl<'a> From<&'a str> for AsnModule<'a> {
@@ -63,33 +75,46 @@ impl<'a> From<&'a str> for AsnModule<'a> {
         let tokens: Vec<&str> = s.split_whitespace().collect();
         let name = tokens[0];
 
-        let sequence_index = tokens.iter().position(|elem| elem == &"SEQUENCE").unwrap();
+        let sequence_indexes : Vec<usize> = tokens
+            .iter()
+            .enumerate()
+            .filter_map(|(i, elem)| {
+                if elem == &"SEQUENCE" { Some(i) } else { None }
+            })
+            .collect();
         let mut sequences = HashMap::new();
-        let (sequence_name, sequence) = AsnSequence::from_tokens(&tokens, sequence_index);
-        sequences.insert(sequence_name, sequence);
+        for sequence_index in sequence_indexes {
+            let (sequence_name, sequence) = AsnSequence::from_tokens(&tokens, sequence_index);
+            sequences.insert(sequence_name, sequence);
+        }
         Self { name, sequences }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::AsnModule;
+    use super::{AsnModule, AsnType};
 
     #[test]
     fn it_works() {
-        let asn1_string = include_str!("../../test-asn/point.asn");
+        let asn1_string = include_str!("../../test-asn/geo.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
-        assert_eq!("PointModule", asn_module.name);
-        assert_eq!(1, asn_module.sequences.len());
-        assert_eq!(2, asn_module.sequences.get("Point").unwrap().fields.len());
-        assert_eq!(
-            "x",
-            asn_module.sequences.get("Point").unwrap().fields[0].name
-        );
-        assert_eq!(
-            "y",
-            asn_module.sequences.get("Point").unwrap().fields[1].name
-        );
+        assert_eq!("Geometry", asn_module.name);
+        assert_eq!(2, asn_module.sequences.len());
+
+        let point = asn_module.sequences.get("Point").unwrap();
+        assert_eq!(2, point.fields.len());
+        assert_eq!("x", point.fields[0].name);
+        assert_eq!(AsnType::Integer, point.fields[0].field_type);
+        assert_eq!("y", point.fields[1].name);
+        assert_eq!(AsnType::Integer, point.fields[1].field_type);
+
+        let line = asn_module.sequences.get("Line").unwrap();
+        assert_eq!(2, line.fields.len());
+        assert_eq!("p1", line.fields[0].name);
+        assert_eq!(AsnType::Custom("Point"), line.fields[0].field_type);
+        assert_eq!("p2", line.fields[1].name);
+        assert_eq!(AsnType::Custom("Point"), line.fields[1].field_type);
     }
 }

@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Span};
 use quote::quote;
 
 mod asn_parser;
-use asn_parser::AsnModule;
+use asn_parser::{AsnModule, AsnType};
 
 fn parse_input(input: TokenStream) -> String {
     for token in input {
@@ -38,15 +38,25 @@ pub fn from(input: TokenStream) -> TokenStream {
 
     for (struct_name, sequence) in asn_module.sequences {
         let struct_name = Ident::new(struct_name, Span::call_site());
-        let field_names = sequence
+        let fields = sequence
             .fields
             .iter()
-            .map(|field| Ident::new(field.name, Span::call_site()));
+            .map(|field| {
+                let field_type = match field.field_type {
+                    AsnType::Integer => "i64",
+                    AsnType::Custom(t) => t,
+                };
+                let name = Ident::new(field.name, Span::call_site());
+                let field_type = Ident::new(field_type, Span::call_site());
+                quote! {
+                    #name : #field_type ,
+                }
+            });
         // TODO consider field type to set appropriate type on Rust struct
         let gen: TokenStream = quote! {
             #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
             struct #struct_name {
-                #(#field_names : i64,)*
+                #(#fields)*
             }
         }
         .into();

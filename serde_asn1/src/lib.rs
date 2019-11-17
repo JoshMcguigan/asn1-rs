@@ -288,7 +288,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
 mod tests {
     use super::from_oer_bytes;
 
-    asn1_codegen::from!("../test-asn/point.asn");
+    asn1_codegen::from!("../test-asn/geo.asn");
 
     #[test]
     fn it_works() {
@@ -301,7 +301,7 @@ mod tests {
         let std_out_bytes = std::process::Command::new("asn1tools")
             .args(&[
                 "convert",
-                "../test-asn/point.asn",
+                "../test-asn/geo.asn",
                 "Point",
                 "-o",
                 "oer", // output OER format
