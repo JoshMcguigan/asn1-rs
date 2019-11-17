@@ -3,6 +3,7 @@ use std::collections::HashMap;
 pub struct AsnModule<'a> {
     name: &'a str,
     pub sequences: HashMap<&'a str, AsnSequence<'a>>,
+    pub type_aliases: HashMap<&'a str, AsnType<'a>>,
 }
 
 pub struct AsnSequence<'a> {
@@ -147,7 +148,27 @@ impl<'a> From<&'a str> for AsnModule<'a> {
             let (sequence_name, sequence) = AsnSequence::from_tokens(&tokens, sequence_index);
             sequences.insert(sequence_name, sequence);
         }
-        Self { name, sequences }
+
+        let type_alises_indexes: Vec<usize> = tokens
+            .windows(3)
+            .enumerate()
+            .filter_map(|(i, window)| {
+                match window {
+                    [name, "::=", "INTEGER"] => Some(i),
+                    _ => None,
+                }
+            })
+            .collect();
+        let mut type_aliases = HashMap::new();
+        for type_alias_name_index in type_alises_indexes {
+            let type_alias_type_index_start = type_alias_name_index + 2;
+            let type_alias_name_index_stop = type_alias_type_index_start + 2;
+            type_aliases.insert(
+                    tokens[type_alias_name_index],
+                    AsnType::from(&tokens[type_alias_type_index_start..type_alias_name_index_stop])
+                );
+        }
+        Self { name, sequences, type_aliases }
     }
 }
 
@@ -177,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn asn_parse() {
+    fn asn_parse_geo() {
         let asn1_string = include_str!("../../test-asn/geo.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
@@ -228,6 +249,12 @@ mod tests {
         assert_eq!(
             AsnType::BoundedInteger { min: 0, max: 255 },
             tiny_rectangle.fields[1].field_type
+        );
+
+        assert_eq!(1, asn_module.type_aliases.len());
+        assert_eq!(
+            &AsnType::BoundedInteger { min: 0, max: 65535 },
+            asn_module.type_aliases.get("Unsigned16").unwrap()
         );
     }
 }
