@@ -42,8 +42,8 @@ struct Point {
 
 #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
 struct Line {
-	pub p1: i64,
-	pub p2: i64,
+	pub p1: Point,
+	pub p2: Point,
 }
 ```
 
@@ -70,3 +70,52 @@ let point = from_oer_bytes::<Point>(&oer_bytes).unwrap();
 
 assert_eq!(2, point.y);
 ```
+
+### Supported ASN.1 Features
+
+- [x] Structures (SEQUENCE)
+- [ ] Lists (SEQUENCE OF)
+- [ ] Enumerations (ENUMERATED)
+- [ ] Imports (IMPORTS x FROM y)
+- [ ] Boolean
+- [x] Integer (currently only unbounded integer types are supported)
+- [ ] Float
+
+Note that the above is not a complete list of all ASN.1 features.
+
+### Supported ASN.1 Encodings
+
+- [ ] Basic Encoding Rules
+- [ ] Distinguished Encoding Rules
+- [x] Octet Encoding Rules (decoding support only, for the above listed ASN.1 features)
+
+Note that the above is not a complete list of all ASN.1 encodings.
+
+### Testing
+
+All tests can be run with `cargo test`, but you'll first need to install the [asn1tools](https://pypi.org/project/asn1tools/) package.
+
+Demo ASN.1 files used for testing are kept in the `test-asn` directory of this repo. Parsing of ASN.1 format is done in the `asn1_codegen` crate and includes unit tests in that crate. The `serde_asn1` crate includes end to end tests with the following flow:
+
+```
+ASN.1 file 
+	-> parsing and code generation
+		-> instantiate the struct and serialize it out to asn1tools via json to get it in OER format
+			-> OER deserialization
+				-> compare original struct to deserialized struct
+```
+
+This provides test coverage of parsing, code generation, and OER deserialization. 
+
+### License
+
+Licensed under either of
+
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
