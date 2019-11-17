@@ -80,7 +80,7 @@ assert_eq!(2, point.y);
 - [ ] Enumerations (ENUMERATED)
 - [ ] Imports (IMPORTS x FROM y)
 - [ ] Boolean
-- [x] Integer (currently only unbounded integer types are supported)
+- [x] Integer (currently only a subset of constraints are supported)
 - [ ] Float
 
 Note that the above is not a complete list of all ASN.1 features.
