@@ -44,7 +44,11 @@ pub fn from(input: TokenStream) -> TokenStream {
                 // TODO use min/max to determine appropriate type
                 // make note somewhere that the generated rust code doesn't enforce
                 // ranges which don't fall on std lib type boundaries
-                AsnType::BoundedInteger { min, max } => "u64",
+                AsnType::BoundedInteger { min, max } => match (min, max) {
+                    (0..=255, 0..=255) => "u8",
+                    (0..=18446744073709551615, 0..=18446744073709551615) => "u64",
+                    (min, max) => panic!("min: {}, max: {}", min, max),
+                },
                 AsnType::Custom(t) => t,
             };
             let name = Ident::new(field.name, Span::call_site());

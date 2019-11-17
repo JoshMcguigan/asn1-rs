@@ -65,17 +65,29 @@ pub enum AsnType<'a> {
     Custom(&'a str),
 }
 
+/// Expected input: "(0..255)"
+/// Output: (min, max)
+fn parse_bounds(s: &str) -> (i128, i128) {
+    let mut vals = s.split("..");
+    let min_as_string = vals.next().unwrap().trim_start_matches('(');
+    let max_as_string = vals.next().unwrap().trim_end_matches(')');
+    assert_eq!(None, vals.next());
+
+    (
+        min_as_string.parse().unwrap(),
+        max_as_string.parse().unwrap(),
+    )
+}
+
 impl<'a, 'b> From<&'a [&'b str]> for AsnType<'b> {
     fn from(s: &'a [&'b str]) -> Self {
         match s {
             ["INTEGER"] => Self::Integer,
             [other] => Self::Custom(other),
-            // TODO actually parse bounds
-            // tokenizer should probably consider `(`, `..`, and `)` as tokens
-            ["INTEGER", bounds] => Self::BoundedInteger {
-                min: 0,
-                max: 18_446_744_073_709_551_616,
-            },
+            ["INTEGER", bounds] => {
+                let (min, max) = parse_bounds(bounds);
+                Self::BoundedInteger { min, max }
+            }
             _ => unimplemented!(),
         }
     }
@@ -170,7 +182,7 @@ mod tests {
         let asn_module = AsnModule::from(&*asn1_string);
 
         assert_eq!("Geometry", asn_module.name);
-        assert_eq!(3, asn_module.sequences.len());
+        assert_eq!(4, asn_module.sequences.len());
 
         let point = asn_module.sequences.get("Point").unwrap();
         assert_eq!(2, point.fields.len());
@@ -192,7 +204,7 @@ mod tests {
         assert_eq!(
             AsnType::BoundedInteger {
                 min: 0,
-                max: 18_446_744_073_709_551_616
+                max: 18_446_744_073_709_551_615
             },
             rectangle.fields[0].field_type
         );
@@ -200,9 +212,22 @@ mod tests {
         assert_eq!(
             AsnType::BoundedInteger {
                 min: 0,
-                max: 18_446_744_073_709_551_616
+                max: 18_446_744_073_709_551_615
             },
             rectangle.fields[1].field_type
+        );
+
+        let tiny_rectangle = asn_module.sequences.get("TinyRectangle").unwrap();
+        assert_eq!(2, tiny_rectangle.fields.len());
+        assert_eq!("width", tiny_rectangle.fields[0].name);
+        assert_eq!(
+            AsnType::BoundedInteger { min: 0, max: 255 },
+            tiny_rectangle.fields[0].field_type
+        );
+        assert_eq!("height", tiny_rectangle.fields[1].name);
+        assert_eq!(
+            AsnType::BoundedInteger { min: 0, max: 255 },
+            tiny_rectangle.fields[1].field_type
         );
     }
 }

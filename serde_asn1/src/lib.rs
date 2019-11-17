@@ -64,6 +64,8 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
+    /// Large numbers are serialized as a single byte specifying the length, then
+    /// the actual value (which must be exactly length bytes).
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -77,11 +79,15 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         visitor.visit_i64(i64::from(*value as i8))
     }
 
-    fn deserialize_u8<V>(self, _visitor: V) -> Result<V::Value>
+    /// Known small numbers are serialized as just the value (without specifying
+    /// a length).
+    fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        let (value, rest) = self.input.split_first().ok_or(Error::Eof)?;
+        self.input = rest;
+        visitor.visit_u8(*value)
     }
 
     fn deserialize_u16<V>(self, _visitor: V) -> Result<V::Value>
@@ -352,5 +358,25 @@ mod tests {
         assert_eq!(oer_bytes, [1, 5, 1, 10, 1, 15, 1, 25]);
 
         assert_eq!(from_oer_bytes::<Line>(&oer_bytes).unwrap(), line);
+    }
+
+    #[test]
+    fn tiny_rectangle() {
+        // explicitly specify the types of these fields to verify the code generation
+        let tiny_rectangle = TinyRectangle {
+            width: 10_u8,
+            height: 5_u8,
+        };
+
+        let oer_bytes =
+            serialize_with_asn1tools("../test-asn/geo.asn", "TinyRectangle", &tiny_rectangle);
+
+        // Sanity check the asn1tools output
+        assert_eq!(oer_bytes, [10, 5]);
+
+        assert_eq!(
+            from_oer_bytes::<TinyRectangle>(&oer_bytes).unwrap(),
+            tiny_rectangle
+        );
     }
 }
