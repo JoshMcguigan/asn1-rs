@@ -74,14 +74,14 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let asn1_string = std::fs::read_to_string("../src/asn/point.asn").unwrap();
+        let asn1_string = include_str!("../../src/asn/point.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
 
         assert_eq!("PointModule", asn_module.name);
         assert_eq!(1, asn_module.sequences.len());
         assert_eq!(2, asn_module.sequences.get("Point").unwrap().fields.len());
-        assert_eq!("INTEGER", asn_module.sequences.get("Point").unwrap().fields.get("x").unwrap().name);
-        assert_eq!("INTEGER", asn_module.sequences.get("Point").unwrap().fields.get("y").unwrap().name);
+        assert_eq!("x", asn_module.sequences.get("Point").unwrap().fields[0].name);
+        assert_eq!("y", asn_module.sequences.get("Point").unwrap().fields[1].name);
     }
 }
