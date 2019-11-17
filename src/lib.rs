@@ -28,35 +28,35 @@ pub fn from_oer_bytes<'a, T>(input: &'a [u8]) -> Result<T>
 impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
     type Error = Error;
 
-    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         Err(Error::Message(String::from("no any support")))
     }
 
-    fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_bool<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_i8<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_i8<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_i16<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_i16<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_i32<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -78,28 +78,28 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         visitor.visit_i64(i64::from(*value as i8))
     }
 
-    fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_u8<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_u16<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_u32<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_u64<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_u64<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -127,14 +127,14 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_str<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_str<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_string<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -155,14 +155,14 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_option<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_unit<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -172,7 +172,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
     fn deserialize_unit_struct<V>(
         self,
         _name: &'static str,
-        visitor: V,
+        _visitor: V,
     ) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -183,7 +183,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
     fn deserialize_newtype_struct<V>(
         self,
         _name: &'static str,
-        visitor: V,
+        _visitor: V,
     ) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -191,7 +191,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_seq<V>(mut self, visitor: V) -> Result<V::Value>
+    fn deserialize_seq<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -242,7 +242,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         self,
         _name: &'static str,
         _len: usize,
-        visitor: V,
+        _visitor: V,
     ) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -250,7 +250,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
+    fn deserialize_map<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -273,7 +273,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         self,
         _name: &'static str,
         _variants: &'static [&'static str],
-        visitor: V,
+        _visitor: V,
     ) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -281,14 +281,14 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_identifier<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_ignored_any<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
