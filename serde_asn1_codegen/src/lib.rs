@@ -22,7 +22,9 @@ pub fn from(input: TokenStream) -> TokenStream {
     let crate_root = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let mut path = std::path::PathBuf::from(crate_root);
     let input_path_string = parse_input(input);
-    let i = input_path_string.trim_start_matches('"').trim_end_matches('"');
+    let i = input_path_string
+        .trim_start_matches('"')
+        .trim_end_matches('"');
     let input_path = std::path::PathBuf::from(&i);
     path.push(&input_path);
 
@@ -36,15 +38,18 @@ pub fn from(input: TokenStream) -> TokenStream {
 
     for (struct_name, sequence) in asn_module.sequences {
         let struct_name = Ident::new(struct_name, Span::call_site());
-        let field_names = sequence.fields.iter()
+        let field_names = sequence
+            .fields
+            .iter()
             .map(|field| Ident::new(field.name, Span::call_site()));
         // TODO consider field type to set appropriate type on Rust struct
-        let gen : TokenStream = quote! {
+        let gen: TokenStream = quote! {
             #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
             struct #struct_name {
                 #(#field_names : i64,)*
             }
-        }.into();
+        }
+        .into();
         out.extend(gen);
     }
 

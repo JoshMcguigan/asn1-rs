@@ -1,7 +1,7 @@
 mod error;
 use error::{Error, Result};
 
-use serde::{Deserialize, de::Visitor};
+use serde::{de::Visitor, Deserialize};
 
 struct OerDeserializer<'de> {
     input: &'de [u8],
@@ -14,7 +14,8 @@ impl<'de> OerDeserializer<'de> {
 }
 
 pub fn from_oer_bytes<'a, T>(input: &'a [u8]) -> Result<T>
-    where T: Deserialize<'a>,
+where
+    T: Deserialize<'a>,
 {
     let mut deserializer = OerDeserializer::from_oer_bytes(input);
     let t = T::deserialize(&mut deserializer)?;
@@ -67,13 +68,11 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let (_field_size, rest) = self.input.split_first()
-            .ok_or(Error::Eof)?;
+        let (_field_size, rest) = self.input.split_first().ok_or(Error::Eof)?;
         self.input = rest;
         // ignore field_size for now
         // but later decide which deserialize methods to use based on length
-        let (value, rest) = self.input.split_first()
-            .ok_or(Error::Eof)?;
+        let (value, rest) = self.input.split_first().ok_or(Error::Eof)?;
         self.input = rest;
         visitor.visit_i64(i64::from(*value as i8))
     }
@@ -169,22 +168,14 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    fn deserialize_unit_struct<V>(
-        self,
-        _name: &'static str,
-        _visitor: V,
-    ) -> Result<V::Value>
+    fn deserialize_unit_struct<V>(self, _name: &'static str, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         unimplemented!()
     }
 
-    fn deserialize_newtype_struct<V>(
-        self,
-        _name: &'static str,
-        _visitor: V,
-    ) -> Result<V::Value>
+    fn deserialize_newtype_struct<V>(self, _name: &'static str, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
@@ -207,8 +198,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
             len: usize,
         }
 
-        impl<'a, 'de> serde::de::SeqAccess<'de> for Access<'a, 'de>
-        {
+        impl<'a, 'de> serde::de::SeqAccess<'de> for Access<'a, 'de> {
             type Error = Error;
 
             fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
@@ -217,10 +207,8 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
             {
                 if self.len > 0 {
                     self.len -= 1;
-                    let value = serde::de::DeserializeSeed::deserialize(
-                        seed,
-                        &mut *self.deserializer,
-                    )?;
+                    let value =
+                        serde::de::DeserializeSeed::deserialize(seed, &mut *self.deserializer)?;
                     Ok(Some(value))
                 } else {
                     Ok(None)
@@ -312,18 +300,23 @@ mod tests {
 
         let std_out_bytes = std::process::Command::new("asn1tools")
             .args(&[
-                "convert", 
-                "test-asn/point.asn", 
-                "Point", 
-                "-o", "oer", // output OER format
-                "-i", "jer", // input JSON format
+                "convert",
+                "test-asn/point.asn",
+                "Point",
+                "-o",
+                "oer", // output OER format
+                "-i",
+                "jer", // input JSON format
                 // asn1tools expects the input in hex
-                &hex::encode(serde_json::to_string(&point).unwrap().as_bytes())])
-            .output().unwrap().stdout;
+                &hex::encode(serde_json::to_string(&point).unwrap().as_bytes()),
+            ])
+            .output()
+            .unwrap()
+            .stdout;
         let std_out_hex_string = String::from_utf8_lossy(&std_out_bytes);
         let std_out_hex_string_without_newline = std_out_hex_string.trim_end();
         let oer_bytes = hex::decode(std_out_hex_string_without_newline).unwrap();
-        
+
         // This assertion is checking the output of asn1tools, as well as our processing
         // and interpretation of the returned bytes. It is left here mostly because it is
         // helpful to see the input bytes to the deserialization code under test.

@@ -33,17 +33,20 @@ impl<'a> AsnSequence<'a> {
             // trim the comma between lines
             let field_type = tokens[index + offset + 1].trim_end_matches(',');
 
-            if field_name == "}" { 
+            if field_name == "}" {
                 // end of fields
                 break;
             }
 
-            fields.push(AsnField { name: field_name, field_type: AsnType { name: field_type } });
+            fields.push(AsnField {
+                name: field_name,
+                field_type: AsnType { name: field_type },
+            });
 
             offset += 2;
         }
 
-        let sequence = AsnSequence { fields }; 
+        let sequence = AsnSequence { fields };
 
         (sequence_name, sequence)
     }
@@ -77,11 +80,16 @@ mod tests {
         let asn1_string = include_str!("../../test-asn/point.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
-
         assert_eq!("PointModule", asn_module.name);
         assert_eq!(1, asn_module.sequences.len());
         assert_eq!(2, asn_module.sequences.get("Point").unwrap().fields.len());
-        assert_eq!("x", asn_module.sequences.get("Point").unwrap().fields[0].name);
-        assert_eq!("y", asn_module.sequences.get("Point").unwrap().fields[1].name);
+        assert_eq!(
+            "x",
+            asn_module.sequences.get("Point").unwrap().fields[0].name
+        );
+        assert_eq!(
+            "y",
+            asn_module.sequences.get("Point").unwrap().fields[1].name
+        );
     }
 }
