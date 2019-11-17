@@ -3,6 +3,8 @@ extern crate proc_macro;
 use crate::proc_macro::{TokenStream, TokenTree};
 use quote::quote;
 
+mod asn_parser;
+
 fn parse_input(input: TokenStream) -> String {
     for token in input {
         if let TokenTree::Literal(s) = token {
@@ -22,8 +24,8 @@ pub fn from(input: TokenStream) -> TokenStream {
     let input_path = std::path::PathBuf::from(&i);
     path.push(&input_path);
 
-    if !path.exists() {
-        panic!("Must provide a valid path");
+    if !path.is_file() {
+        panic!("Must provide path to a file");
     }
     let gen = quote! {
         #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
