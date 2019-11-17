@@ -24,26 +24,29 @@ impl<'a> AsnSequence<'a> {
         let sequence_name = tokens[sequence_name_index];
         let mut fields = vec![];
 
-        // Offset is the change in token index needed to get from the SEQUENCE
-        // keyword to the next field name to process. It is initialized to 2
-        // because the first field name is +2 from the SEQUENCE keyword.
-        let mut offset = 2;
+        // The first field name is +2 tokens from the SEQUENCE keyword.
+        let mut next_field_name = index + 2;
         loop {
-            let field_name = tokens[index + offset];
-            // trim the comma between lines
-            let field_type = tokens[index + offset + 1].trim_end_matches(',');
-
-            if field_name == "}" {
-                // end of fields
-                break;
-            }
+            let field_name = tokens[next_field_name];
+            let field_type_start_index = next_field_name + 1;
+            let field_type_end_index = &tokens[field_type_start_index..]
+                .iter()
+                .position(|s| s == &"," || s == &"}")
+                .unwrap()
+                + field_type_start_index;
+            let field_type = &tokens[field_type_start_index..field_type_end_index];
 
             fields.push(AsnField {
                 name: field_name,
                 field_type: field_type.into(),
             });
 
-            offset += 2;
+            if tokens[field_type_end_index] == "}" {
+                // end of fields
+                break;
+            }
+
+            next_field_name = field_type_end_index + 1;
         }
 
         let sequence = AsnSequence { fields };
@@ -56,22 +59,70 @@ impl<'a> AsnSequence<'a> {
 pub enum AsnType<'a> {
     /// ASN1 default integer type with no bounds specified
     Integer,
+    /// ASN1 default integer type with user specified bounds
+    BoundedInteger { min: i128, max: i128 },
     /// Custom type defined by the user
     Custom(&'a str),
 }
 
-impl<'a> From<&'a str> for AsnType<'a> {
-    fn from(s: &'a str) -> Self {
+impl<'a, 'b> From<&'a [&'b str]> for AsnType<'b> {
+    fn from(s: &'a [&'b str]) -> Self {
         match s {
-            "INTEGER" => Self::Integer,
-            other => Self::Custom(other),
+            ["INTEGER"] => Self::Integer,
+            [other] => Self::Custom(other),
+            // TODO actually parse bounds
+            // tokenizer should probably consider `(`, `..`, and `)` as tokens
+            ["INTEGER", bounds] => Self::BoundedInteger {
+                min: 0,
+                max: 18_446_744_073_709_551_616,
+            },
+            _ => unimplemented!(),
         }
     }
 }
 
+fn tokenizer(s: &str) -> Vec<&str> {
+    let tokens: Vec<&str> = s
+        .split_whitespace()
+        .flat_map(|s| split_keep_separator(s))
+        .collect();
+
+    tokens
+}
+
+/// Like the std lib split function, but allows us to keep the
+/// separator (a comma in our case).
+fn split_keep_separator(s: &str) -> Vec<&str> {
+    let mut out = vec![];
+
+    let mut slice_start = 0;
+    let separator = ',';
+    let separator_size = separator.len_utf8();
+
+    for (index, character) in s.char_indices() {
+        if character == separator {
+            if index > slice_start {
+                // push characters before separator, if there are any
+                out.push(&s[slice_start..index]);
+            }
+            // push separator
+            let index_behind_separator = index + separator_size;
+            out.push(&s[index..index_behind_separator]);
+            slice_start = index_behind_separator;
+        }
+    }
+
+    // push any characters after the last separator
+    if slice_start < s.len() {
+        out.push(&s[slice_start..s.len()]);
+    }
+
+    out
+}
+
 impl<'a> From<&'a str> for AsnModule<'a> {
     fn from(s: &'a str) -> Self {
-        let tokens: Vec<&str> = s.split_whitespace().collect();
+        let tokens: Vec<&str> = tokenizer(s);
         let name = tokens[0];
 
         let sequence_indexes: Vec<usize> = tokens
@@ -93,12 +144,33 @@ mod tests {
     use super::{AsnModule, AsnType};
 
     #[test]
-    fn it_works() {
+    fn split_keep_separator() {
+        let input = ",";
+        assert_eq!(vec![","], super::split_keep_separator(input));
+
+        let input = "test,";
+        assert_eq!(vec!["test", ","], super::split_keep_separator(input));
+
+        let input = "test,test2";
+        assert_eq!(
+            vec!["test", ",", "test2"],
+            super::split_keep_separator(input)
+        );
+    }
+
+    #[test]
+    fn tokenizer() {
+        let input = "my fake, input";
+        assert_eq!(vec!["my", "fake", ",", "input"], super::tokenizer(input));
+    }
+
+    #[test]
+    fn asn_parse() {
         let asn1_string = include_str!("../../test-asn/geo.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
         assert_eq!("Geometry", asn_module.name);
-        assert_eq!(2, asn_module.sequences.len());
+        assert_eq!(3, asn_module.sequences.len());
 
         let point = asn_module.sequences.get("Point").unwrap();
         assert_eq!(2, point.fields.len());
@@ -113,5 +185,24 @@ mod tests {
         assert_eq!(AsnType::Custom("Point"), line.fields[0].field_type);
         assert_eq!("p2", line.fields[1].name);
         assert_eq!(AsnType::Custom("Point"), line.fields[1].field_type);
+
+        let rectangle = asn_module.sequences.get("Rectangle").unwrap();
+        assert_eq!(2, rectangle.fields.len());
+        assert_eq!("width", rectangle.fields[0].name);
+        assert_eq!(
+            AsnType::BoundedInteger {
+                min: 0,
+                max: 18_446_744_073_709_551_616
+            },
+            rectangle.fields[0].field_type
+        );
+        assert_eq!("height", rectangle.fields[1].name);
+        assert_eq!(
+            AsnType::BoundedInteger {
+                min: 0,
+                max: 18_446_744_073_709_551_616
+            },
+            rectangle.fields[1].field_type
+        );
     }
 }

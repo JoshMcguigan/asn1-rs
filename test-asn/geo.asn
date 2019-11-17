@@ -10,4 +10,9 @@ Line ::= SEQUENCE {
 	p2	Point
 }
 
+Rectangle ::= SEQUENCE {
+	width	INTEGER (0..18446744073709551616),
+	height	INTEGER (0..18446744073709551616)
+}
+
 END

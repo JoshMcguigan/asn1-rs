@@ -41,6 +41,10 @@ pub fn from(input: TokenStream) -> TokenStream {
         let fields = sequence.fields.iter().map(|field| {
             let field_type = match field.field_type {
                 AsnType::Integer => "i64",
+                // TODO use min/max to determine appropriate type
+                // make note somewhere that the generated rust code doesn't enforce
+                // ranges which don't fall on std lib type boundaries
+                AsnType::BoundedInteger { min, max } => "u64",
                 AsnType::Custom(t) => t,
             };
             let name = Ident::new(field.name, Span::call_site());
@@ -49,7 +53,7 @@ pub fn from(input: TokenStream) -> TokenStream {
                 pub #name : #field_type ,
             }
         });
-        // TODO consider field type to set appropriate type on Rust struct
+
         let gen: TokenStream = quote! {
             #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
             struct #struct_name {
