@@ -46,7 +46,7 @@ pub fn from(input: TokenStream) -> TokenStream {
             let name = Ident::new(field.name, Span::call_site());
             let field_type = Ident::new(field_type, Span::call_site());
             quote! {
-                #name : #field_type ,
+                pub #name : #field_type ,
             }
         });
         // TODO consider field type to set appropriate type on Rust struct
