@@ -290,6 +290,8 @@ mod tests {
 
     asn1_codegen::from!("../test-asn/geo.asn");
 
+    /// Subprocess call to asn1tools to serialize the given struct using
+    /// OER encoding.
     fn serialize_with_asn1tools<'a, T>(
         file_path: &str,
         struct_name: &str,
@@ -316,9 +318,8 @@ mod tests {
             .stdout;
         let std_out_hex_string = String::from_utf8_lossy(&std_out_bytes);
         let std_out_hex_string_without_newline = std_out_hex_string.trim_end();
-        let oer_bytes = hex::decode(std_out_hex_string_without_newline).unwrap();
 
-        oer_bytes
+        hex::decode(std_out_hex_string_without_newline).unwrap()
     }
 
     #[test]
