@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let asn1_string = include_str!("../../src/asn/point.asn");
+        let asn1_string = include_str!("../../test-asn/point.asn");
         let asn_module = AsnModule::from(&*asn1_string);
 
 

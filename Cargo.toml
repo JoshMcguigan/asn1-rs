@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Josh Mcguigan"]
 edition = "2018"
 
+[workspace]
+members = ["serde_asn1_codegen"]
+
 [dependencies]
 serde = "1.0"
 serde_asn1_codegen = { path = "serde_asn1_codegen" }
