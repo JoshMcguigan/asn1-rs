@@ -1,5 +1,7 @@
 # asn1-rs
 
+#### This crate is a work in progress. It is very incomplete and the ASN.1 file parsing in particular is low quality.
+
 This repo houses a collection of Rust libraries for working with [ASN.1](https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One).
 
 ## Code Generation
