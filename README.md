@@ -23,7 +23,7 @@ END
 ```
 
 ```toml
-// Cargo.toml
+# Cargo.toml
 [dependencies]
 asn1_codegen = "*"
 serde_derive = "1.0"
@@ -53,7 +53,7 @@ Deserialization of the [Octet Encoding Rules (OER)](https://www.itu.int/rec/T-RE
 
 
 ```toml
-// Cargo.toml
+# Cargo.toml
 [dependencies]
 asn1_codegen = "*"
 serde_asn1 = "*"
