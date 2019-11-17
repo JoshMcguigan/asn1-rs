@@ -64,8 +64,9 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    /// Large numbers are serialized as a single byte specifying the length, then
-    /// the actual value (which must be exactly length bytes).
+    /// Rec.ITU-T X.696 
+    /// TODO convert this to i128 behavior
+    /// because values which actually fit into i64 are serialized into fixed size
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -79,8 +80,11 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         visitor.visit_i64(i64::from(*value as i8))
     }
 
-    /// Known small numbers are serialized as just the value (without specifying
-    /// a length).
+    /// Rec.ITU-T X.696 10.3 a
+    /// For lower bound greater than or equal to zero.
+    /// If the upper bound is less than or equal to 2^8 - 1, then
+    /// every value of the integer type shall be encoded as a
+    /// fixed-size unsigned number in a one-octet word.
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -90,11 +94,24 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         visitor.visit_u8(*value)
     }
 
-    fn deserialize_u16<V>(self, _visitor: V) -> Result<V::Value>
+    /// Rec.ITU-T X.696 10.3 b
+    /// For lower bound greater than or equal to zero.
+    /// If the upper bound is less than or equal to 2^16 - 1, then
+    /// every value of the integer type shall be encoded as a
+    /// fixed-size unsigned number in a one-octet word.
+    fn deserialize_u16<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        let (value_bytes, rest) = self.input.split_at(2);
+        self.input = rest;
+
+        // interpret value_bytes as big endian
+        let val1 = value_bytes[0];
+        let val2 = value_bytes[1];
+        let value = u16::from(val1) << 8 | u16::from(val2);
+       
+        visitor.visit_u16(value)
     }
 
     fn deserialize_u32<V>(self, _visitor: V) -> Result<V::Value>
@@ -377,6 +394,26 @@ mod tests {
         assert_eq!(
             from_oer_bytes::<TinyRectangle>(&oer_bytes).unwrap(),
             tiny_rectangle
+        );
+    }
+
+    #[test]
+    fn small_rectangle() {
+        // explicitly specify the types of these fields to verify the code generation
+        let small_rectangle = SmallRectangle {
+            width: 11_u16,
+            height: 6_u16,
+        };
+
+        let oer_bytes =
+            serialize_with_asn1tools("../test-asn/geo.asn", "SmallRectangle", &small_rectangle);
+
+        // Sanity check the asn1tools output
+        assert_eq!(oer_bytes, [0, 11, 0, 6]);
+
+        assert_eq!(
+            from_oer_bytes::<SmallRectangle>(&oer_bytes).unwrap(),
+            small_rectangle
         );
     }
 }

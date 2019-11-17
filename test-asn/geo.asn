@@ -22,4 +22,9 @@ TinyRectangle ::= SEQUENCE {
 	height	INTEGER (0..255)
 }
 
+SmallRectangle ::= SEQUENCE {
+	width	Unsigned16,
+	height	Unsigned16
+}
+
 END

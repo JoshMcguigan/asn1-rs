@@ -36,25 +36,35 @@ pub fn from(input: TokenStream) -> TokenStream {
 
     let mut out = TokenStream::new();
 
-    for (struct_name, sequence) in asn_module.sequences {
+    for (struct_name, sequence) in &asn_module.sequences {
         let struct_name = Ident::new(struct_name, Span::call_site());
         let fields = sequence.fields.iter().map(|field| {
-            let field_type = match field.field_type {
+            let field_type = if let AsnType::Custom(type_name) = field.field_type {
+                // if the type is custom, check for it in the known type aliases
+                if let Some(t) = &asn_module.type_aliases.get(type_name) {
+                    t
+                } else {
+                    &field.field_type
+                }
+            } else {
+                &field.field_type
+            };
+            let rust_field_type_as_string = match field_type {
                 AsnType::Integer => "i64",
-                // TODO use min/max to determine appropriate type
                 // make note somewhere that the generated rust code doesn't enforce
                 // ranges which don't fall on std lib type boundaries
                 AsnType::BoundedInteger { min, max } => match (min, max) {
                     (0..=255, 0..=255) => "u8",
+                    (0..=65535, 0..=65535) => "u16",
                     (0..=18446744073709551615, 0..=18446744073709551615) => "u64",
                     (min, max) => panic!("min: {}, max: {}", min, max),
                 },
                 AsnType::Custom(t) => t,
             };
             let name = Ident::new(field.name, Span::call_site());
-            let field_type = Ident::new(field_type, Span::call_site());
+            let rust_field_type = Ident::new(rust_field_type_as_string, Span::call_site());
             quote! {
-                pub #name : #field_type ,
+                pub #name : #rust_field_type ,
             }
         });
 

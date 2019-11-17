@@ -58,11 +58,15 @@ impl<'a> AsnSequence<'a> {
 
 #[derive(Debug, PartialEq)]
 pub enum AsnType<'a> {
-    /// ASN1 default integer type with no bounds specified
+    /// ASN1 default integer type with no bounds specified.
     Integer,
-    /// ASN1 default integer type with user specified bounds
+    /// ASN1 default integer type with user specified bounds.
     BoundedInteger { min: i128, max: i128 },
-    /// Custom type defined by the user
+    /// Custom type defined by the user. At code generation,
+    /// check to see if the type is included in type aliases,
+    /// and if so, replace the type alias with the concrete type.
+    /// Otherwise, use the custom name as is, under the assumption
+    /// that it is defined already as a sequence or enum.
     Custom(&'a str),
 }
 
@@ -203,7 +207,7 @@ mod tests {
         let asn_module = AsnModule::from(&*asn1_string);
 
         assert_eq!("Geometry", asn_module.name);
-        assert_eq!(4, asn_module.sequences.len());
+        assert_eq!(5, asn_module.sequences.len());
 
         let point = asn_module.sequences.get("Point").unwrap();
         assert_eq!(2, point.fields.len());
