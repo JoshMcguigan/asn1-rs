@@ -291,7 +291,7 @@ mod tests {
     asn1_codegen::from!("../test-asn/geo.asn");
 
     #[test]
-    fn it_works() {
+    fn point() {
         // explicitly specify the types of these fields to verify the code generation
         let point = Point {
             x: -2_i64,
@@ -324,5 +324,47 @@ mod tests {
         assert_eq!(oer_bytes, [1, 254, 1, 2]);
 
         assert_eq!(from_oer_bytes::<Point>(&oer_bytes).unwrap(), point);
+    }
+
+    #[test]
+    fn line() {
+        let p1 = Point {
+            x: 5,
+            y: 10,
+        };
+        let p2 = Point {
+            x: 15,
+            y: 25,
+        };
+        let line = Line { p1, p2 };
+
+
+
+        let std_out_bytes = std::process::Command::new("asn1tools")
+            .args(&[
+                "convert",
+                "../test-asn/geo.asn",
+                "Line",
+                "-o",
+                "oer", // output OER format
+                "-i",
+                "jer", // input JSON format
+                // asn1tools expects the input in hex
+                &hex::encode(serde_json::to_string(&line).unwrap().as_bytes()),
+            ])
+            .current_dir(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+            .output()
+            .unwrap()
+            .stdout;
+        let std_out_hex_string = String::from_utf8_lossy(&std_out_bytes);
+        let std_out_hex_string_without_newline = std_out_hex_string.trim_end();
+        let oer_bytes = hex::decode(std_out_hex_string_without_newline).unwrap();
+
+        // This assertion is checking the output of asn1tools, as well as our processing
+        // and interpretation of the returned bytes. It is left here mostly because it is
+        // helpful to see the input bytes to the deserialization code under test.
+        assert_eq!(oer_bytes, [1, 5, 1, 10, 1, 15, 1, 25]);
+
+        assert_eq!(from_oer_bytes::<Line>(&oer_bytes).unwrap(), line);
     }
 }
