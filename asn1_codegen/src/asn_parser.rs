@@ -60,7 +60,6 @@ pub enum AsnType<'a> {
     Custom(&'a str),
 }
 
-
 impl<'a> From<&'a str> for AsnType<'a> {
     fn from(s: &'a str) -> Self {
         match s {
@@ -75,12 +74,10 @@ impl<'a> From<&'a str> for AsnModule<'a> {
         let tokens: Vec<&str> = s.split_whitespace().collect();
         let name = tokens[0];
 
-        let sequence_indexes : Vec<usize> = tokens
+        let sequence_indexes: Vec<usize> = tokens
             .iter()
             .enumerate()
-            .filter_map(|(i, elem)| {
-                if elem == &"SEQUENCE" { Some(i) } else { None }
-            })
+            .filter_map(|(i, elem)| if elem == &"SEQUENCE" { Some(i) } else { None })
             .collect();
         let mut sequences = HashMap::new();
         for sequence_index in sequence_indexes {
