@@ -1,9 +1,11 @@
 extern crate proc_macro;
 
 use crate::proc_macro::{TokenStream, TokenTree};
+use proc_macro2::{Ident, Span};
 use quote::quote;
 
 mod asn_parser;
+use asn_parser::AsnModule;
 
 fn parse_input(input: TokenStream) -> String {
     for token in input {
@@ -27,12 +29,24 @@ pub fn from(input: TokenStream) -> TokenStream {
     if !path.is_file() {
         panic!("Must provide path to a file");
     }
-    let gen = quote! {
-        #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
-        struct Point {
-            x: i64,
-            y: i64,
-        }
-    };
-    gen.into()
+    let asn1_string = std::fs::read_to_string(path).unwrap();
+    let asn_module = AsnModule::from(&*asn1_string);
+
+    let mut out = TokenStream::new();
+
+    for (struct_name, sequence) in asn_module.sequences {
+        let struct_name = Ident::new(struct_name, Span::call_site());
+        let field_names = sequence.fields.iter()
+            .map(|field| Ident::new(field.name, Span::call_site()));
+        // TODO consider field type to set appropriate type on Rust struct
+        let gen : TokenStream = quote! {
+            #[derive(serde_derive::Serialize, serde_derive::Deserialize, Debug, PartialEq)]
+            struct #struct_name {
+                #(#field_names : i64,)*
+            }
+        }.into();
+        out.extend(gen);
+    }
+
+    out
 }
