@@ -1,5 +1,5 @@
 [package]
-name = "serde_asn1_codegen"
+name = "asn1_codegen"
 version = "0.1.0"
 authors = ["Josh Mcguigan"]
 edition = "2018"

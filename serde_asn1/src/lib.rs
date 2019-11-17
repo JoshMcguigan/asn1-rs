@@ -288,7 +288,7 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
 mod tests {
     use super::from_oer_bytes;
 
-    serde_asn1_codegen::from!("test-asn/point.asn");
+    asn1_codegen::from!("../test-asn/point.asn");
 
     #[test]
     fn it_works() {
@@ -301,7 +301,7 @@ mod tests {
         let std_out_bytes = std::process::Command::new("asn1tools")
             .args(&[
                 "convert",
-                "test-asn/point.asn",
+                "../test-asn/point.asn",
                 "Point",
                 "-o",
                 "oer", // output OER format
@@ -310,6 +310,7 @@ mod tests {
                 // asn1tools expects the input in hex
                 &hex::encode(serde_json::to_string(&point).unwrap().as_bytes()),
             ])
+            .current_dir(std::env::var("CARGO_MANIFEST_DIR").unwrap())
             .output()
             .unwrap()
             .stdout;
