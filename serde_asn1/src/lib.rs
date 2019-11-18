@@ -64,20 +64,25 @@ impl<'de, 'a> serde::de::Deserializer<'de> for &'a mut OerDeserializer<'de> {
         unimplemented!()
     }
 
-    /// Rec.ITU-T X.696 
-    /// TODO convert this to i128 behavior
-    /// because values which actually fit into i64 are serialized into fixed size
-    fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value>
+    fn deserialize_i64<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        let (_field_size, rest) = self.input.split_first().ok_or(Error::Eof)?;
+        unimplemented!()
+    }
+
+    fn deserialize_i128<V>(self, visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>,
+    {
+        let (&field_size, rest) = self.input.split_first().ok_or(Error::Eof)?;
         self.input = rest;
-        // ignore field_size for now
-        // but later decide which deserialize methods to use based on length
-        let (value, rest) = self.input.split_first().ok_or(Error::Eof)?;
+
+        assert_eq!(1, field_size, "This method is currently not implemented for field size > 1");
+
+        let (&value, rest) = self.input.split_first().ok_or(Error::Eof)?;
         self.input = rest;
-        visitor.visit_i64(i64::from(*value as i8))
+        visitor.visit_i64(i64::from(value as i8))
     }
 
     /// Rec.ITU-T X.696 10.3 a
@@ -349,8 +354,8 @@ mod tests {
     fn point() {
         // explicitly specify the types of these fields to verify the code generation
         let point = Point {
-            x: -2_i64,
-            y: 2_i64,
+            x: -2_i128,
+            y: 2_i128,
         };
 
         let oer_bytes = serialize_with_asn1tools("../test-asn/geo.asn", "Point", &point);

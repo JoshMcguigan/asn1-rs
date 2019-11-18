@@ -50,7 +50,7 @@ pub fn from(input: TokenStream) -> TokenStream {
                 &field.field_type
             };
             let rust_field_type_as_string = match field_type {
-                AsnType::Integer => "i64",
+                AsnType::Integer => "i128",
                 // make note somewhere that the generated rust code doesn't enforce
                 // ranges which don't fall on std lib type boundaries
                 AsnType::BoundedInteger { min, max } => match (min, max) {
