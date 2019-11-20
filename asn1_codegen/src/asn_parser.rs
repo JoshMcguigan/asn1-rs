@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub struct AsnModule<'a> {
-    name: &'a str,
+    pub name: &'a str,
     pub sequences: HashMap<&'a str, AsnSequence<'a>>,
     pub type_aliases: HashMap<&'a str, AsnType<'a>>,
 }
@@ -30,7 +30,7 @@ impl<'a> AsnSequence<'a> {
         loop {
             let field_name = tokens[next_field_name];
             let field_type_start_index = next_field_name + 1;
-            let field_type_end_index = &tokens[field_type_start_index..]
+            let field_type_end_index = tokens[field_type_start_index..]
                 .iter()
                 .position(|s| s == &"," || s == &"}")
                 .unwrap()
@@ -91,7 +91,7 @@ impl<'a, 'b> From<&'a [&'b str]> for AsnType<'b> {
             [other] => Self::Custom(other),
             ["INTEGER", bounds] => {
                 let (min, max) = parse_bounds(bounds);
-                Self::BoundedInteger { min, max }
+                AsnType::BoundedInteger { min, max }
             }
             _ => unimplemented!(),
         }
@@ -158,7 +158,7 @@ impl<'a> From<&'a str> for AsnModule<'a> {
             .enumerate()
             .filter_map(|(i, window)| {
                 match window {
-                    [name, "::=", "INTEGER"] => Some(i),
+                    [_name, "::=", "INTEGER"] => Some(i),
                     _ => None,
                 }
             })
